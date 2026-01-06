@@ -5,6 +5,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 urlpatterns = [
     # APIs
     path('users/', include('api.users.urls')),
+    path('pet-adoption-notices/', include('api.pet_adoption_notices.urls')),
     # Schema
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger'),

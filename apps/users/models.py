@@ -3,10 +3,10 @@ from django.contrib.gis.db.models import PointField
 from django.db import models
 
 from apps.users.validators import name_validator, phone_validator
-from utils.models import MetadataModel
+from utils.models import MetadataMixin
 
 
-class User(AbstractUser, MetadataModel):
+class User(AbstractUser, MetadataMixin):
     is_admin = models.BooleanField(
         verbose_name='Администратор',
         default=False,

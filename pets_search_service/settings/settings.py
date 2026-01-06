@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from pets_search_service.settings.env_reader import env
 
@@ -19,10 +20,12 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'rest_framework',
+    'django_filters',
     'drf_spectacular',
     'rest_framework.authtoken',
     # Project applications
     'apps.users.apps.UsersConfig',
+    'apps.pet_adoption_notices.apps.PetAdoptionNoticesConfig',
 ]
 
 MIDDLEWARE = [
@@ -89,6 +92,30 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=env.int('ACCESS_TOKEN_LIFETIME_MINUTES', 60)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'UPDATE_LAST_LOGIN': True,
+}
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+        'OPTIONS': {
+            'bucket_name': env.str('MINIO_BUCKET_NAME'),
+            'endpoint_url': env.str('MINIO_ENDPOINT'),
+            'custom_domain': env.str('MINIO_EXTERNAL_URL'),
+            'access_key': env.str('MINIO_ROOT_USER'),
+            'secret_key': env.str('MINIO_ROOT_PASSWORD'),
+            'querystring_auth': False,
+            'file_overwrite': False,
+        },
+    },
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
 }
 
 AUTH_USER_MODEL = 'users.User'
