@@ -1,0 +1,14 @@
+# django
+SECRET_KEY=secret_key
+DEBUG=True
+SERVER_HOST=*
+
+# db
+POSTGRES_DB=postgres
+POSTGRES_USER=username
+POSTGRES_PASSWORD=password
+DEFAULT_DB_HOST=postgres-main
+DEFAULT_DB_PORT=5432
+
+# celery
+CACHE_URL=redis://redis:6379
