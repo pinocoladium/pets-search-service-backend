@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     # Project applications
     'apps.users.apps.UsersConfig',
     'apps.pet_adoption_notices.apps.PetAdoptionNoticesConfig',
+    'apps.pet_missing_notices.apps.PetMissingNoticesConfig',
 ]
 
 MIDDLEWARE = [
