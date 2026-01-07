@@ -22,7 +22,7 @@ class PetFoundNotice(PetNoticeMixin, MetadataMixin):
 
     finder = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         verbose_name='Нашедший',
         related_name='pet_found_notices',
         null=True,

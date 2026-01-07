@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'apps.users.apps.UsersConfig',
     'apps.pet_adoption_notices.apps.PetAdoptionNoticesConfig',
     'apps.pet_missing_notices.apps.PetMissingNoticesConfig',
+    'apps.pet_found_notices.apps.PetFoundNoticesConfig',
+    'apps.pet_notice_matches.apps.PetNoticeMatchesConfig',
 ]
 
 MIDDLEWARE = [
