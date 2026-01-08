@@ -6,10 +6,19 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from api.pet_found_notices.serializers import PetFoundNoticeSerializer
+from apps.pet_found_notices.choices import PetFoundNoticeStatusChoices
 from apps.pet_found_notices.models import PetFoundNotice
 from utils.views import NoDeleteModelViewSet
+
+
+class ActivePetFoundNoticeAPIView(ReadOnlyModelViewSet):
+    queryset = PetFoundNotice.objects.filter(status=PetFoundNoticeStatusChoices.ACTIVE)
+    serializer_class = PetFoundNoticeSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
 
 class PetFoundNoticeViewSet(NoDeleteModelViewSet):
