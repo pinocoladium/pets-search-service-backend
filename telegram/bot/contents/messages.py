@@ -13,3 +13,9 @@ PET_MISSING_NOTICES_MESSAGE: Final[str] = 'На сегодняшний день 
 PET_FOUND_NOTICES_MESSAGE: Final[str] = 'Держи список найденных животных'
 
 PET_ADOPTION_NOTICES_MESSAGE: Final[str] = 'Свой дом ищут эти питомцы'
+
+PERSONAL_ACCOUNT_MESSAGE: Final[str] = 'Здесь доступен следующий функционал личного кабинета'
+
+CALLBACK_ANSWER_MESSAGE: Final[str] = 'Секунду...'
+
+NO_NOTICES_MESSAGE: Final[str] = 'Пока нет объявлений 😔'
