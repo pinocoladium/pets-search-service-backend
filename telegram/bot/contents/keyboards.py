@@ -32,3 +32,32 @@ def get_main_keyboard() -> InlineKeyboardMarkup:
     )
     builder.adjust(1)
     return builder.as_markup()
+
+
+def get_more_details_keyboard(callback_data: str) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(
+            text='Подробнее',
+            callback_data=callback_data,
+        )
+    )
+    return builder.as_markup()
+
+
+def get_back_keyboard(back_callback_data: str = None) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    if back_callback_data:
+        builder.add(
+            InlineKeyboardButton(
+                text='Обратно',
+                callback_data=back_callback_data,
+            )
+        )
+    builder.add(
+        InlineKeyboardButton(
+            text='В меню',
+            callback_data=callbacks.MAIN_KEYBOARD,
+        )
+    )
+    return builder.as_markup()

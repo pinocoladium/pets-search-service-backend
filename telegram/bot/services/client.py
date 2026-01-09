@@ -1,11 +1,11 @@
 from typing import Any
 
-import httpx
+from httpx import AsyncClient
 
 
-class HttpClient:
+class DjangoHttpClient:
     def __init__(self, base_url: str) -> None:
-        self._client = httpx.AsyncClient(
+        self._client = AsyncClient(
             base_url=base_url,
             timeout=10.0,
         )
