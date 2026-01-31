@@ -9,7 +9,7 @@ PET_SPECIES_MAP: Mapping[str, str] = {
 }
 
 PET_SEX_MAP: Mapping[str, str] = {
-    'MALE': '♂ Самец',
-    'FEMALE': '♀ Самка',
+    'MALE': '♂ Мальчик',
+    'FEMALE': '♀ Девочка',
     'UNKNOWN': '❓ Неизвестно',
 }

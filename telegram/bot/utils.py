@@ -1,3 +1,5 @@
+from datetime import date, datetime, timedelta
+
 from aiogram.fsm.context import FSMContext
 
 
@@ -16,3 +18,41 @@ async def save_bot_message(state: FSMContext, message) -> None:
     messages = data.get('bot_messages', [])
     messages.append(message.message_id)
     await state.update_data(bot_messages=messages)
+
+
+def parse_datetime(text: str) -> datetime | None:
+    text = text.strip().lower()
+
+    base_date = date.today()
+
+    if text.startswith('сегодня'):
+        text = text.replace('сегодня', '').strip()
+    elif text.startswith('вчера'):
+        base_date -= timedelta(days=1)
+        text = text.replace('вчера', '').strip()
+
+    try:
+        found_time = datetime.strptime(text, '%H:%M').time()
+        return datetime.combine(base_date, found_time)
+    except ValueError:
+        pass
+
+    formats = [
+        '%d.%m.%Y %H:%M',
+        '%d/%m/%Y %H:%M',
+        '%d-%m-%Y %H:%M',
+        '%d.%m %H:%M',
+        '%d/%m %H:%M',
+        '%d-%m %H:%M',
+    ]
+
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(text, fmt)
+            if '%Y' not in fmt:
+                dt = dt.replace(year=base_date.year)
+            return dt
+        except ValueError:
+            continue
+
+    return None

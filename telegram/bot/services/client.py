@@ -15,5 +15,10 @@ class DjangoHttpClient:
         response.raise_for_status()
         return response.json()
 
+    async def post(self, url: str, request_data: dict, files: dict | None = None) -> Any:
+        response = await self._client.post(url, data=request_data, files=files)
+        response.raise_for_status()
+        return response.json()
+
     async def close(self) -> None:
         await self._client.aclose()

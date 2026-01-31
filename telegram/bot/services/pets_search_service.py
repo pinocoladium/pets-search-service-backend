@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from datetime import datetime
 from typing import Final
 
 from telegram.bot.services.client import DjangoHttpClient
@@ -34,17 +35,27 @@ class PetsSearchService:
             pet_adoption_notices = await self._client.get(f'{self.PET_ADOPTION_NOTICES_API_URL}active/')
         return self._parse_pet_adoption_notices(pet_adoption_notices)
 
+    async def create_anonymous_found_notice(
+        self, request_data: dict, image_bytes: bytes, image_filename: str = 'photo.jpg'
+    ) -> None:
+        await self._client.post(
+            f'{self.PET_FOUND_NOTICES_API_URL}create-anonymous-notice/',
+            request_data=request_data,
+            files={'image': (image_filename, image_bytes, 'image/jpeg')},
+        )
+
     def _parse_pet_missing_notices(self, pet_missing_notices: Iterable[dict]) -> Iterable[str]:
         result = []
 
         for pet_missing_notice in pet_missing_notices:
             full_text = self._format_common_fields(pet_missing_notice)
-            full_text += f"<b>Время пропажи:</b> {pet_missing_notice['lost_datetime']}"
+            date_and_time = datetime.fromisoformat(pet_missing_notice['lost_datetime']).strftime('%d.%m.%Y %H:%M')
+            full_text += f"<b>Время пропажи:</b> {date_and_time}"
+            short_text = self._get_short_text(pet_missing_notice)
             result.append(
                 {
                     'id': pet_missing_notice['id'],
-                    'short_text': f"🐾 <b>{pet_missing_notice['title']}</b>\n"
-                    f"\n<b>Кличка:</b> {pet_missing_notice['pet_name']}\n",
+                    'short_text': short_text,
                     'full_text': full_text,
                     'image_url': pet_missing_notice['image'],
                 }
@@ -57,12 +68,13 @@ class PetsSearchService:
 
         for pet_found_notice in pet_found_notices:
             full_text = self._format_common_fields(pet_found_notice)
-            full_text += f"<b>Время обнаружения:</b> {pet_found_notice['found_datetime']}"
+            date_and_time = datetime.fromisoformat(pet_found_notice['found_datetime']).strftime('%d.%m.%Y %H:%M')
+            full_text += f"<b>Время обнаружения:</b> {date_and_time}"
+            short_text = self._get_short_text(pet_found_notice)
             result.append(
                 {
                     'id': pet_found_notice['id'],
-                    'short_text': f"🐾 <b>{pet_found_notice['title']}</b>\n"
-                    f"\n<b>Кличка:</b> {pet_found_notice['pet_name']}\n",
+                    'short_text': short_text,
                     'full_text': full_text,
                     'image_url': pet_found_notice['image'],
                 }
@@ -74,8 +86,7 @@ class PetsSearchService:
         return [
             {
                 'id': pet_adoption_notice['id'],
-                'short_text': f"🐾 <b>{pet_adoption_notice['title']}</b>\n"
-                f"\n<b>Кличка:</b> {pet_adoption_notice['pet_name']}\n",
+                'short_text': self._get_short_text(pet_adoption_notice),
                 'full_text': self._format_common_fields(pet_adoption_notice),
                 'image_url': pet_adoption_notice['image'],
             }
@@ -99,3 +110,11 @@ class PetsSearchService:
         text += f"\n<b>Описание:</b>\n{notice['description']}\n\n"
 
         return text
+
+    @staticmethod
+    def _get_short_text(notice: dict) -> str:
+        return (
+            f"🐾 <b>{notice['title']}</b>\n\n<b>Вид:</b> {PET_SPECIES_MAP.get(notice['pet_species'], '—')}\n"
+            f"<b>Пол:</b> {PET_SEX_MAP.get(notice['pet_sex'], '—')}\n<b>Кличка:</b> {notice['pet_name']}\n\n"
+            f"<b>Время создания:</b> {datetime.fromisoformat(notice['created_at']).strftime('%d.%m.%Y %H:%M')}"
+        )

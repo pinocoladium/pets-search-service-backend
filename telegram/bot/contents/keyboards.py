@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from telegram.bot.contents import callbacks
@@ -22,12 +22,6 @@ def get_main_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton(
             text='Посмотреть список ищущих дом питомцев',
             callback_data=callbacks.PET_ADOPTION_NOTICES,
-        )
-    )
-    builder.add(
-        InlineKeyboardButton(
-            text='Личный кабинет',
-            callback_data=callbacks.PERSONAL_ACCOUNT,
         )
     )
     builder.adjust(1)
@@ -61,3 +55,36 @@ def get_back_keyboard(back_callback_data: str = None) -> InlineKeyboardMarkup:
         )
     )
     return builder.as_markup()
+
+
+def get_add_anonymous_found_notice_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(
+            text='Оставить сообщение',
+            callback_data=callbacks.ADD_ANONYMOUS_FOUND_NOTICE,
+        )
+    )
+    return builder.as_markup()
+
+
+def get_pet_species_keyboard() -> ReplyKeyboardMarkup:
+    keys = [
+        [
+            KeyboardButton(text='Собака'),
+            KeyboardButton(text='Кошка'),
+            KeyboardButton(text='Птица'),
+            KeyboardButton(text='Другое'),
+        ],
+    ]
+    return ReplyKeyboardMarkup(keyboard=keys, resize_keyboard=True, input_field_placeholder='Выберите вид животного')
+
+
+def get_pet_sex_keyboard() -> ReplyKeyboardMarkup:
+    keys = [
+        [
+            KeyboardButton(text='Мальчик'),
+            KeyboardButton(text='Девочка'),
+        ],
+    ]
+    return ReplyKeyboardMarkup(keyboard=keys, resize_keyboard=True, input_field_placeholder='Выберите вид животного')
