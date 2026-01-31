@@ -46,119 +46,195 @@ async def handle_add_anonymous_found_notice(callback: CallbackQuery, state: FSMC
 
 @router.message(AnonymousFoundPetFSM.title)
 async def handle_set_title_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     await state.update_data(title=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.description)
-    await message.answer('✏️ Опишите по возможности самого питомца и обстоятельства находки')
+    bot_message = await message.answer('✏️ Опишите по возможности самого питомца и обстоятельства находки')
+    await save_bot_message(state, bot_message)
 
 
 @router.message(AnonymousFoundPetFSM.description)
 async def handle_set_description_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     await state.update_data(description=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.pet_name)
-    await message.answer('🐕 Кличка, на которую откликается животное, если неизвестно, напишите "-"')
+    bot_message = await message.answer('🐕 Кличка, на которую откликается животное, если неизвестно, напишите "-"')
+    await save_bot_message(state, bot_message)
 
 
 @router.message(AnonymousFoundPetFSM.pet_name)
 async def handle_set_pet_name_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     await state.update_data(pet_name=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.pet_species)
-    await message.answer(
+    bot_message = await message.answer(
         '🐾 Выберите на клавиатуре вид животного',
         reply_markup=keyboards.get_pet_species_keyboard(),
     )
+    await save_bot_message(state, bot_message)
 
 
 @router.message(AnonymousFoundPetFSM.pet_species, F.text)
 async def handle_set_pet_species_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     text = message.text.strip()
 
     if text not in {'Собака', 'Кошка', 'Птица', 'Другое'}:
-        await message.answer('Выберите вариант с кнопки 👇')
+        bot_message = await message.answer(
+            'Выберите вариант с кнопки 👇', reply_markup=keyboards.get_pet_species_keyboard()
+        )
+        await save_bot_message(state, bot_message)
         return
 
     await state.update_data(pet_species=text)
     await state.set_state(AnonymousFoundPetFSM.pet_breed)
-    await message.answer('📌 Порода (если неизвестна — напишите «-»)', reply_markup=None)
+    bot_message = await message.answer('📌 Порода (если неизвестна — напишите «-»)', reply_markup=None)
+    await save_bot_message(state, bot_message)
 
 
 @router.message(AnonymousFoundPetFSM.pet_breed)
 async def handle_set_pet_breed_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     await state.update_data(pet_breed=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.pet_color)
-    await message.answer('🐾 Напиши приблизительный окрас питомца - цвет и узор покрова (шерсти, кожи, перьев)')
+    bot_message = await message.answer(
+        '🐾 Напиши приблизительный окрас питомца - цвет и узор покрова (шерсти, кожи, перьев)'
+    )
+    await save_bot_message(state, bot_message)
 
 
 @router.message(AnonymousFoundPetFSM.pet_color)
 async def handle_set_pet_color_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     await state.update_data(pet_color=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.pet_special_marks)
-    await message.answer('🐾 Может есть какие-нибудь особые приметы питомца? Если есть, опиши их, пожалуйста')
+    bot_message = await message.answer(
+        '🐾 Может есть какие-нибудь особые приметы питомца? Если есть, опиши их, пожалуйста'
+    )
+    await save_bot_message(state, bot_message)
 
 
 @router.message(AnonymousFoundPetFSM.pet_special_marks)
 async def handle_set_pet_special_marks_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     await state.update_data(pet_special_marks=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.pet_sex)
-    await message.answer(
+    bot_message = await message.answer(
         '🐾 Укажи на клавиатуре пол животного',
         reply_markup=keyboards.get_pet_sex_keyboard(),
     )
+    await save_bot_message(state, bot_message)
 
 
 @router.message(AnonymousFoundPetFSM.pet_sex, F.text)
 async def handle_set_pet_sex_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     text = message.text.strip()
 
     if text not in {'Мальчик', 'Девочка'}:
-        await message.answer('Выберите вариант с кнопки 👇')
+        bot_message = await message.answer(
+            'Выберите вариант с кнопки 👇', reply_markup=keyboards.get_pet_sex_keyboard()
+        )
+        await save_bot_message(state, bot_message)
         return
 
     await state.update_data(pet_sex=text)
     await state.set_state(AnonymousFoundPetFSM.found_datetime)
-    await message.answer(
+    bot_message = await message.answer(
         '🐾 В какое время было найдено животное? '
         'Напиши дату и время в формате ДД.ММ.ГГГГ ЧЧ:ММ, либо - "сегодня 14:30" или "вчера 21:15"',
         reply_markup=None,
     )
+    await save_bot_message(state, bot_message)
 
 
 @router.message(AnonymousFoundPetFSM.found_datetime, F.text)
 async def handle_set_found_datetime_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     found_datetime = parse_datetime(message.text)
 
     if not found_datetime:
-        await message.answer(
+        bot_message = await message.answer(
             '❌ Не смог распознать дату и время.\n\n'
             'Примеры:\n'
             '• 12.01.2025 14:30\n'
             '• сегодня 14:30\n'
             '• вчера 21:15'
         )
+        await save_bot_message(state, bot_message)
         return
 
     await state.update_data(found_datetime=found_datetime)
     await state.set_state(AnonymousFoundPetFSM.found_location)
-    await message.answer('📍 Где было найдено животное? Отправь, пожалуйста, геопозицию')
+    bot_message = await message.answer('📍 Где было найдено животное? Отправь, пожалуйста, геопозицию')
+    await save_bot_message(state, bot_message)
 
 
 @router.message(AnonymousFoundPetFSM.found_location, F.location)
 async def handle_set_found_location_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     location = message.location
 
     await state.update_data(found_location=f'SRID=4326;POINT ({location.longitude} {location.latitude})')
 
     await state.set_state(AnonymousFoundPetFSM.image)
-    await message.answer('📸 Пришли фото питомца', reply_markup=None)
+    bot_message = await message.answer('📸 Пришли фото питомца', reply_markup=None)
+    await save_bot_message(state, bot_message)
 
 
 @router.message(AnonymousFoundPetFSM.image, F.photo)
 async def handle_set_image_anonymous_found_notice(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     try:
         photo = message.photo[-1]
 
@@ -169,16 +245,23 @@ async def handle_set_image_anonymous_found_notice(message: Message, state: FSMCo
         await finish_and_send_to_api(message, state)
 
     except Exception:
-        await message.answer('⚠️ Не удалось обработать фото. Попробуйте ещё раз.')
+        bot_message = await message.answer('⚠️ Не удалось обработать фото. Попробуйте ещё раз.')
+        await save_bot_message(state, bot_message)
 
 
 async def finish_and_send_to_api(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(
+        chat_id=message.chat.id,
+        state=state,
+        bot=message.bot,
+    )
     try:
         data = await state.get_data()
         image_bytes = data.get('image_bytes')
 
         if not image_bytes:
-            await message.answer('⚠️ Фото не найдено. Попробуйте отправить снова.')
+            bot_message = await message.answer('⚠️ Фото не найдено. Попробуйте отправить снова.')
+            await save_bot_message(state, bot_message)
             return
 
         request_data = {
@@ -200,16 +283,19 @@ async def finish_and_send_to_api(message: Message, state: FSMContext) -> None:
         try:
             await pets_search_service.create_anonymous_found_notice(request_data=request_data, image_bytes=image_bytes)
         except Exception:
-            await message.answer('⚠️ Произошла ошибка при создании объявления. Попробуйте позже.')
+            bot_message = await message.answer('⚠️ Произошла ошибка при создании объявления. Попробуйте позже.')
+            await save_bot_message(state, bot_message)
             return
 
         await state.clear()
-        await message.answer(
+        bot_message = await message.answer(
             '✅ Объявление успешно создано! '
             'После прохождения модерации Ваше объявление появится в списке активных\nБольшое спасибо ❤️',
             reply_markup=keyboards.get_back_keyboard(),
         )
+        await save_bot_message(state, bot_message)
 
     except Exception:
-        await message.answer('⚠️ Произошла внутренняя ошибка. Попробуйте снова.')
+        bot_message = await message.answer('⚠️ Произошла внутренняя ошибка. Попробуйте снова.')
+        await save_bot_message(state, bot_message)
         await state.clear()
