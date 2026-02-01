@@ -11,6 +11,8 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from api.pet_found_notices.serializers import PetFoundNoticeSerializer
 from apps.pet_found_notices.choices import PetFoundNoticeStatusChoices
 from apps.pet_found_notices.models import PetFoundNotice
+from utils.constants import NEAREST_NOTICE_DISTANCE_IN_METERS
+from utils.serializers import NoticeLocationSerializer
 from utils.views import NoDeleteModelViewSet
 
 
@@ -19,6 +21,21 @@ class ActivePetFoundNoticeAPIView(ReadOnlyModelViewSet):
     serializer_class = PetFoundNoticeSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
+
+    def list(self, request: Request, *args, **kwargs) -> Response:
+        queryset = self.filter_queryset(self.get_queryset())
+
+        longitude = request.query_params.get('longitude')
+        latitude = request.query_params.get('latitude')
+
+        if longitude and latitude:
+            serializer = NoticeLocationSerializer(data={'longitude': longitude, 'latitude': latitude})
+            serializer.is_valid(raise_exception=True)
+            point = serializer.get_point()
+            queryset = queryset.filter(found_location__distance_lte=(point, NEAREST_NOTICE_DISTANCE_IN_METERS))
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class PetFoundNoticeViewSet(NoDeleteModelViewSet):

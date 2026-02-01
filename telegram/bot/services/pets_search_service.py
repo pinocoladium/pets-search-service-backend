@@ -14,28 +14,25 @@ class PetsSearchService:
     def __init__(self, client: DjangoHttpClient) -> None:
         self._client = client
 
-    async def get_active_pet_missing_notices(self, object_id: int = None, point: str = None) -> list[str]:
+    async def get_active_pet_missing_notices(self, object_id: int = None, params: dict = None) -> list[str]:
         if object_id:
             pet_missing_notices = [await self._client.get(f'{self.PET_MISSING_NOTICES_API_URL}active/{object_id}/')]
         else:
-            params = {'point': point} if point else {}
             pet_missing_notices = await self._client.get(f'{self.PET_MISSING_NOTICES_API_URL}active/', params=params)
         return self._parse_pet_missing_notices(pet_missing_notices)
 
-    async def get_active_pet_found_notices(self, object_id: int = None, point: str = None) -> list[str]:
+    async def get_active_pet_found_notices(self, object_id: int = None, params: dict = None) -> list[str]:
         if object_id:
             pet_found_notices = [await self._client.get(f'{self.PET_FOUND_NOTICES_API_URL}active/{object_id}/')]
         else:
-            params = {'point': point} if point else {}
             pet_found_notices = await self._client.get(f'{self.PET_FOUND_NOTICES_API_URL}active/', params=params)
         return self._parse_pet_found_notices(pet_found_notices)
 
-    async def get_active_pet_adoption_notices(self, object_id: int = None, point: str = None) -> list[dict]:
+    async def get_active_pet_adoption_notices(self, object_id: int = None) -> list[dict]:
         if object_id:
             pet_adoption_notices = [await self._client.get(f'{self.PET_ADOPTION_NOTICES_API_URL}active/{object_id}/')]
         else:
-            params = {'point': point} if point else {}
-            pet_adoption_notices = await self._client.get(f'{self.PET_ADOPTION_NOTICES_API_URL}active/', params=params)
+            pet_adoption_notices = await self._client.get(f'{self.PET_ADOPTION_NOTICES_API_URL}active/')
         return self._parse_pet_adoption_notices(pet_adoption_notices)
 
     async def create_anonymous_found_notice(

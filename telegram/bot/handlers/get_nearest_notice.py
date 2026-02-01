@@ -43,15 +43,16 @@ async def handle_get_all_nearest_notices(message: Message, state: FSMContext) ->
     await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     await state.clear()
 
-    location = message.location
-
     bot_message = await message.answer('🔍 Ищу все объявления рядом с тобой...', reply_markup=None)
     await save_bot_message(state, bot_message)
 
-    point = f'SRID=4326;POINT ({location.longitude} {location.latitude})'
+    longitude = message.location.longitude
+    latitude = message.location.latitude
 
-    pet_missing_notices = await get_pets_search_service().get_active_pet_missing_notices(point=point)
-    pet_found_notices = await get_pets_search_service().get_active_pet_found_notices(point=point)
+    params = {'longitude': longitude, 'latitude': latitude} if longitude and latitude else {}
+
+    pet_missing_notices = await get_pets_search_service().get_active_pet_missing_notices(params=params)
+    pet_found_notices = await get_pets_search_service().get_active_pet_found_notices(params=params)
 
     if not pet_missing_notices and not pet_found_notices:
         bot_message = await message.answer(
