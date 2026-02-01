@@ -32,11 +32,7 @@ router = Router()
 @router.callback_query(F.data == callbacks.ADD_ANONYMOUS_FOUND_NOTICE)
 async def handle_add_anonymous_found_notice(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer(messages.CALLBACK_ANSWER_MESSAGE)
-    await clear_bot_messages(
-        chat_id=callback.message.chat.id,
-        state=state,
-        bot=callback.bot,
-    )
+    await clear_bot_messages(chat_id=callback.message.chat.id, state=state, bot=callback.bot)
     await state.clear()
     await state.set_state(AnonymousFoundPetFSM.title)
 
@@ -46,11 +42,7 @@ async def handle_add_anonymous_found_notice(callback: CallbackQuery, state: FSMC
 
 @router.message(AnonymousFoundPetFSM.title)
 async def handle_set_title_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     await state.update_data(title=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.description)
@@ -60,11 +52,7 @@ async def handle_set_title_anonymous_found_notice(message: Message, state: FSMCo
 
 @router.message(AnonymousFoundPetFSM.description)
 async def handle_set_description_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     await state.update_data(description=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.pet_name)
@@ -74,11 +62,7 @@ async def handle_set_description_anonymous_found_notice(message: Message, state:
 
 @router.message(AnonymousFoundPetFSM.pet_name)
 async def handle_set_pet_name_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     await state.update_data(pet_name=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.pet_species)
@@ -91,11 +75,7 @@ async def handle_set_pet_name_anonymous_found_notice(message: Message, state: FS
 
 @router.message(AnonymousFoundPetFSM.pet_species, F.text)
 async def handle_set_pet_species_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     text = message.text.strip()
 
     if text not in {'Собака', 'Кошка', 'Птица', 'Другое'}:
@@ -113,11 +93,7 @@ async def handle_set_pet_species_anonymous_found_notice(message: Message, state:
 
 @router.message(AnonymousFoundPetFSM.pet_breed)
 async def handle_set_pet_breed_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     await state.update_data(pet_breed=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.pet_color)
@@ -129,11 +105,7 @@ async def handle_set_pet_breed_anonymous_found_notice(message: Message, state: F
 
 @router.message(AnonymousFoundPetFSM.pet_color)
 async def handle_set_pet_color_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     await state.update_data(pet_color=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.pet_special_marks)
@@ -145,11 +117,7 @@ async def handle_set_pet_color_anonymous_found_notice(message: Message, state: F
 
 @router.message(AnonymousFoundPetFSM.pet_special_marks)
 async def handle_set_pet_special_marks_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     await state.update_data(pet_special_marks=message.text)
 
     await state.set_state(AnonymousFoundPetFSM.pet_sex)
@@ -162,11 +130,7 @@ async def handle_set_pet_special_marks_anonymous_found_notice(message: Message, 
 
 @router.message(AnonymousFoundPetFSM.pet_sex, F.text)
 async def handle_set_pet_sex_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     text = message.text.strip()
 
     if text not in {'Мальчик', 'Девочка'}:
@@ -188,11 +152,7 @@ async def handle_set_pet_sex_anonymous_found_notice(message: Message, state: FSM
 
 @router.message(AnonymousFoundPetFSM.found_datetime, F.text)
 async def handle_set_found_datetime_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     found_datetime = parse_datetime(message.text)
 
     if not found_datetime:
@@ -214,11 +174,7 @@ async def handle_set_found_datetime_anonymous_found_notice(message: Message, sta
 
 @router.message(AnonymousFoundPetFSM.found_location, F.location)
 async def handle_set_found_location_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     location = message.location
 
     await state.update_data(found_location=f'SRID=4326;POINT ({location.longitude} {location.latitude})')
@@ -230,11 +186,7 @@ async def handle_set_found_location_anonymous_found_notice(message: Message, sta
 
 @router.message(AnonymousFoundPetFSM.image, F.photo)
 async def handle_set_image_anonymous_found_notice(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     try:
         photo = message.photo[-1]
 
@@ -250,11 +202,7 @@ async def handle_set_image_anonymous_found_notice(message: Message, state: FSMCo
 
 
 async def finish_and_send_to_api(message: Message, state: FSMContext) -> None:
-    await clear_bot_messages(
-        chat_id=message.chat.id,
-        state=state,
-        bot=message.bot,
-    )
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
     try:
         data = await state.get_data()
         image_bytes = data.get('image_bytes')

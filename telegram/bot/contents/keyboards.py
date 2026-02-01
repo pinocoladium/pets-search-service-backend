@@ -24,6 +24,12 @@ def get_main_keyboard() -> InlineKeyboardMarkup:
             callback_data=callbacks.PET_ADOPTION_NOTICES,
         )
     )
+    builder.add(
+        InlineKeyboardButton(
+            text='Посмотреть все объявления вокруг меня',
+            callback_data=callbacks.ALL_NEAREST_NOTICES,
+        )
+    )
     builder.adjust(1)
     return builder.as_markup()
 
@@ -88,3 +94,11 @@ def get_pet_sex_keyboard() -> ReplyKeyboardMarkup:
         ],
     ]
     return ReplyKeyboardMarkup(keyboard=keys, resize_keyboard=True, input_field_placeholder='Выберите вид животного')
+
+
+def get_location_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text='📍 Отправить мою локацию', request_location=True)]],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )

@@ -1,14 +1,20 @@
 from datetime import date, datetime, timedelta
 
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
+from aiogram.types import BufferedInputFile
+from httpx import AsyncClient
 
 
 async def clear_bot_messages(chat_id: int, state: FSMContext, bot) -> None:
     data = await state.get_data()
     message_ids = data.get('bot_messages', [])
 
-    for message_id in message_ids:
-        await bot.delete_message(chat_id, message_id)
+    for message_id in reversed(message_ids):
+        try:
+            await bot.delete_message(chat_id, message_id)
+        except TelegramBadRequest:
+            pass
 
     await state.update_data(bot_messages=[])
 
@@ -56,3 +62,16 @@ def parse_datetime(text: str) -> datetime | None:
             continue
 
     return None
+
+
+async def download_image(url: str) -> BufferedInputFile:
+    async with AsyncClient() as client:
+        response = await client.get(url)
+        response.raise_for_status()
+
+        filename = url.split('/')[-1]
+
+        return BufferedInputFile(
+            response.content,
+            filename=filename,
+        )

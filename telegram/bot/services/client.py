@@ -10,8 +10,8 @@ class DjangoHttpClient:
             timeout=10.0,
         )
 
-    async def get(self, url: str) -> Any:
-        response = await self._client.get(url)
+    async def get(self, url: str, params: dict = None) -> Any:
+        response = await self._client.get(url, params=params)
         response.raise_for_status()
         return response.json()
 

@@ -4,16 +4,15 @@ import os
 import sys
 
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import BufferedInputFile, CallbackQuery, Message
-from httpx import AsyncClient
+from aiogram.types import CallbackQuery, Message
 
 from telegram.bot.contents import callbacks, keyboards, messages, stickers
-from telegram.bot.handlers import router
+from telegram.bot.handlers import add_anonymous_notice_router, get_nearest_notice_router
 from telegram.bot.services.client import DjangoHttpClient
 from telegram.bot.services.pets_search_service import PetsSearchService
-from telegram.bot.utils import clear_bot_messages, save_bot_message
+from telegram.bot.utils import clear_bot_messages, download_image, save_bot_message
 
 
 logging.basicConfig(level=logging.INFO)
@@ -21,7 +20,8 @@ logging.basicConfig(level=logging.INFO)
 telegram_bot = Bot(token=os.getenv('TELEGRAM_BOT_TOKEN'))
 
 dispatcher = Dispatcher()
-dispatcher.include_router(router)
+dispatcher.include_router(add_anonymous_notice_router)
+dispatcher.include_router(get_nearest_notice_router)
 
 http_client = DjangoHttpClient(os.getenv('DJANGO_BASE_API_URL'))
 pets_search_service = PetsSearchService(http_client)
@@ -44,11 +44,7 @@ async def handle_start_command(message: Message, state: FSMContext) -> None:
 @dispatcher.callback_query(F.data == callbacks.MAIN_KEYBOARD)
 async def handle_main_keyboard_command(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer(messages.CALLBACK_ANSWER_MESSAGE)
-    await clear_bot_messages(
-        chat_id=callback.message.chat.id,
-        state=state,
-        bot=callback.bot,
-    )
+    await clear_bot_messages(chat_id=callback.message.chat.id, state=state, bot=callback.bot)
 
     bot_message = await callback.message.answer(
         messages.MAIN_KEYBOARD_MESSAGE, reply_markup=keyboards.get_main_keyboard()
@@ -63,12 +59,7 @@ async def handle_main_keyboard_command(callback: CallbackQuery, state: FSMContex
 @dispatcher.callback_query(F.data == callbacks.PET_MISSING_NOTICES)
 async def handle_get_pet_missing_notices(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer(messages.CALLBACK_ANSWER_MESSAGE)
-
-    await clear_bot_messages(
-        chat_id=callback.message.chat.id,
-        state=state,
-        bot=callback.bot,
-    )
+    await clear_bot_messages(chat_id=callback.message.chat.id, state=state, bot=callback.bot)
 
     pet_missing_notices = await pets_search_service.get_active_pet_missing_notices()
 
@@ -103,11 +94,7 @@ async def handle_get_pet_missing_notices(callback: CallbackQuery, state: FSMCont
 @dispatcher.callback_query(F.data.startswith(callbacks.PET_MISSING_NOTICES_DETAILS))
 async def handle_get_pet_missing_notices_details(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer(messages.CALLBACK_ANSWER_MESSAGE)
-    await clear_bot_messages(
-        chat_id=callback.message.chat.id,
-        state=state,
-        bot=callback.bot,
-    )
+    await clear_bot_messages(chat_id=callback.message.chat.id, state=state, bot=callback.bot)
 
     _, object_id = callback.data.split(':')
     pet_missing_notices = await pets_search_service.get_active_pet_missing_notices(int(object_id))
@@ -125,11 +112,7 @@ async def handle_get_pet_missing_notices_details(callback: CallbackQuery, state:
 @dispatcher.callback_query(F.data == callbacks.PET_FOUND_NOTICES)
 async def handle_get_pet_found_notices(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer(messages.CALLBACK_ANSWER_MESSAGE)
-    await clear_bot_messages(
-        chat_id=callback.message.chat.id,
-        state=state,
-        bot=callback.bot,
-    )
+    await clear_bot_messages(chat_id=callback.message.chat.id, state=state, bot=callback.bot)
 
     pet_found_notices = await pets_search_service.get_active_pet_found_notices()
 
@@ -154,6 +137,7 @@ async def handle_get_pet_found_notices(callback: CallbackQuery, state: FSMContex
                 ),
             )
             await save_bot_message(state, bot_message)
+
     bot_message = await callback.message.answer(
         messages.BACK_TO_MAIN_MESSAGE, reply_markup=keyboards.get_back_keyboard()
     )
@@ -163,11 +147,7 @@ async def handle_get_pet_found_notices(callback: CallbackQuery, state: FSMContex
 @dispatcher.callback_query(F.data.startswith(callbacks.PET_FOUND_NOTICES_DETAILS))
 async def handle_get_pet_found_notices_details(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer(messages.CALLBACK_ANSWER_MESSAGE)
-    await clear_bot_messages(
-        chat_id=callback.message.chat.id,
-        state=state,
-        bot=callback.bot,
-    )
+    await clear_bot_messages(chat_id=callback.message.chat.id, state=state, bot=callback.bot)
 
     _, object_id = callback.data.split(':')
     pet_found_notices = await pets_search_service.get_active_pet_found_notices(int(object_id))
@@ -185,11 +165,7 @@ async def handle_get_pet_found_notices_details(callback: CallbackQuery, state: F
 @dispatcher.callback_query(F.data == callbacks.PET_ADOPTION_NOTICES)
 async def handle_get_pet_adoption_notices(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer(messages.CALLBACK_ANSWER_MESSAGE)
-    await clear_bot_messages(
-        chat_id=callback.message.chat.id,
-        state=state,
-        bot=callback.bot,
-    )
+    await clear_bot_messages(chat_id=callback.message.chat.id, state=state, bot=callback.bot)
 
     pet_adoption_notices = await pets_search_service.get_active_pet_adoption_notices()
 
@@ -224,11 +200,7 @@ async def handle_get_pet_adoption_notices(callback: CallbackQuery, state: FSMCon
 @dispatcher.callback_query(F.data.startswith(callbacks.PET_ADOPTION_NOTICES_DETAILS))
 async def handle_get_pet_adoption_notices_details(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer(messages.CALLBACK_ANSWER_MESSAGE)
-    await clear_bot_messages(
-        chat_id=callback.message.chat.id,
-        state=state,
-        bot=callback.bot,
-    )
+    await clear_bot_messages(chat_id=callback.message.chat.id, state=state, bot=callback.bot)
 
     _, object_id = callback.data.split(':')
     pet_adoption_notices = await pets_search_service.get_active_pet_adoption_notices(int(object_id))
@@ -243,21 +215,19 @@ async def handle_get_pet_adoption_notices_details(callback: CallbackQuery, state
         await save_bot_message(state, bot_message)
 
 
+@dispatcher.message(StateFilter(None), F.text)
+async def handle_unknown_message(message: Message, state: FSMContext) -> None:
+    await clear_bot_messages(chat_id=message.chat.id, state=state, bot=message.bot)
+
+    bot_message = await message.answer(
+        '🤔 Я не совсем понял сообщение....\n' 'Пожалуйста, воспользуйтесь кнопками меню 👇',
+        reply_markup=keyboards.get_main_keyboard(),
+    )
+    await save_bot_message(state, bot_message)
+
+
 async def on_shutdown() -> None:
     await http_client.close()
-
-
-async def download_image(url: str) -> BufferedInputFile:
-    async with AsyncClient() as client:
-        response = await client.get(url)
-        response.raise_for_status()
-
-        filename = url.split('/')[-1]
-
-        return BufferedInputFile(
-            response.content,
-            filename=filename,
-        )
 
 
 async def main() -> None:

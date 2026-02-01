@@ -14,25 +14,28 @@ class PetsSearchService:
     def __init__(self, client: DjangoHttpClient) -> None:
         self._client = client
 
-    async def get_active_pet_missing_notices(self, object_id: int = None) -> Iterable[str]:
+    async def get_active_pet_missing_notices(self, object_id: int = None, point: str = None) -> list[str]:
         if object_id:
             pet_missing_notices = [await self._client.get(f'{self.PET_MISSING_NOTICES_API_URL}active/{object_id}/')]
         else:
-            pet_missing_notices = await self._client.get(f'{self.PET_MISSING_NOTICES_API_URL}active/')
+            params = {'point': point} if point else {}
+            pet_missing_notices = await self._client.get(f'{self.PET_MISSING_NOTICES_API_URL}active/', params=params)
         return self._parse_pet_missing_notices(pet_missing_notices)
 
-    async def get_active_pet_found_notices(self, object_id: int = None) -> Iterable[str]:
+    async def get_active_pet_found_notices(self, object_id: int = None, point: str = None) -> list[str]:
         if object_id:
             pet_found_notices = [await self._client.get(f'{self.PET_FOUND_NOTICES_API_URL}active/{object_id}/')]
         else:
-            pet_found_notices = await self._client.get(f'{self.PET_FOUND_NOTICES_API_URL}active/')
+            params = {'point': point} if point else {}
+            pet_found_notices = await self._client.get(f'{self.PET_FOUND_NOTICES_API_URL}active/', params=params)
         return self._parse_pet_found_notices(pet_found_notices)
 
-    async def get_active_pet_adoption_notices(self, object_id: int = None) -> Iterable[dict]:
+    async def get_active_pet_adoption_notices(self, object_id: int = None, point: str = None) -> list[dict]:
         if object_id:
             pet_adoption_notices = [await self._client.get(f'{self.PET_ADOPTION_NOTICES_API_URL}active/{object_id}/')]
         else:
-            pet_adoption_notices = await self._client.get(f'{self.PET_ADOPTION_NOTICES_API_URL}active/')
+            params = {'point': point} if point else {}
+            pet_adoption_notices = await self._client.get(f'{self.PET_ADOPTION_NOTICES_API_URL}active/', params=params)
         return self._parse_pet_adoption_notices(pet_adoption_notices)
 
     async def create_anonymous_found_notice(
@@ -44,7 +47,7 @@ class PetsSearchService:
             files={'image': (image_filename, image_bytes, 'image/jpeg')},
         )
 
-    def _parse_pet_missing_notices(self, pet_missing_notices: Iterable[dict]) -> Iterable[str]:
+    def _parse_pet_missing_notices(self, pet_missing_notices: Iterable[dict]) -> list[str]:
         result = []
 
         for pet_missing_notice in pet_missing_notices:
@@ -63,7 +66,7 @@ class PetsSearchService:
 
         return result
 
-    def _parse_pet_found_notices(self, pet_found_notices: Iterable[dict]) -> Iterable[str]:
+    def _parse_pet_found_notices(self, pet_found_notices: Iterable[dict]) -> list[str]:
         result = []
 
         for pet_found_notice in pet_found_notices:
@@ -82,7 +85,7 @@ class PetsSearchService:
 
         return result
 
-    def _parse_pet_adoption_notices(self, pet_adoption_notices: Iterable[dict]) -> Iterable[str]:
+    def _parse_pet_adoption_notices(self, pet_adoption_notices: Iterable[dict]) -> list[str]:
         return [
             {
                 'id': pet_adoption_notice['id'],
