@@ -54,7 +54,9 @@ async def handle_get_all_nearest_notices(message: Message, state: FSMContext) ->
     pet_found_notices = await get_pets_search_service().get_active_pet_found_notices(point=point)
 
     if not pet_missing_notices and not pet_found_notices:
-        bot_message = await message.answer('😔 Поблизости ничего не найдено')
+        bot_message = await message.answer(
+            '😔 Поблизости ничего не найдено', reply_markup=keyboards.get_back_keyboard()
+        )
         await save_bot_message(state, bot_message)
         return
 

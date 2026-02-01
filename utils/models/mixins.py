@@ -63,7 +63,7 @@ class PetNoticeMixin(models.Model):
         max_length=7,
     )
 
-    pet_age = models.FloatField(
+    pet_age = models.IntegerField(
         verbose_name='Возраст питомца',
         null=True,
     )

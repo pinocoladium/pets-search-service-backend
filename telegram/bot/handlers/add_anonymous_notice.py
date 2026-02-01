@@ -231,8 +231,12 @@ async def finish_and_send_to_api(message: Message, state: FSMContext) -> None:
         try:
             await pets_search_service.create_anonymous_found_notice(request_data=request_data, image_bytes=image_bytes)
         except Exception:
-            bot_message = await message.answer('⚠️ Произошла ошибка при создании объявления. Попробуйте позже.')
+            bot_message = await message.answer(
+                '⚠️ Произошла ошибка при создании объявления. Попробуйте позже.',
+                reply_markup=keyboards.get_back_keyboard(),
+            )
             await save_bot_message(state, bot_message)
+            await state.clear()
             return
 
         await state.clear()
@@ -244,6 +248,9 @@ async def finish_and_send_to_api(message: Message, state: FSMContext) -> None:
         await save_bot_message(state, bot_message)
 
     except Exception:
-        bot_message = await message.answer('⚠️ Произошла внутренняя ошибка. Попробуйте снова.')
+        bot_message = await message.answer(
+            '⚠️ Произошла внутренняя ошибка. Попробуйте снова.',
+            reply_markup=keyboards.get_back_keyboard(),
+        )
         await save_bot_message(state, bot_message)
         await state.clear()

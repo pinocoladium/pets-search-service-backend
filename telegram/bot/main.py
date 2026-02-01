@@ -125,6 +125,8 @@ async def handle_get_pet_found_notices(callback: CallbackQuery, state: FSMContex
             messages.NO_NOTICES_MESSAGE, reply_markup=keyboards.get_back_keyboard()
         )
         await save_bot_message(state, bot_message)
+        return
+
     else:
         bot_message = await callback.message.answer(messages.PET_FOUND_NOTICES_MESSAGE)
         await save_bot_message(state, bot_message)
