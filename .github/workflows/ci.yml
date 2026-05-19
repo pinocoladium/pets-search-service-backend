@@ -5,6 +5,18 @@ on:
     branches:
       - main
 
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: pets-search-service-backend
+  REGISTRY: ghcr.io
+
 jobs:
   lint:
     name: Lint
@@ -25,7 +37,7 @@ jobs:
 
       - name: Run pre-commit hooks
         run: |
-          pre-commit run --all-files
+          SKIP=no-commit-to-branch pre-commit run --all-files
 
   test:
     name: Test
@@ -72,3 +84,44 @@ jobs:
       - name: Run security scan
         run: |
           bandit -r . -x ./tests,./venv,./.venv
+
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Convert repository owner to lowercase
+        id: repo_owner
+        run: |
+          echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=sha-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
