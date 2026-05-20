@@ -73,3 +73,10 @@ celerybeat-schedule.db
 # docker compose databases storages
 /storage/
 .precomcache/
+
+# terraform
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup

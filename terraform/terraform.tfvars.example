@@ -1,0 +1,30 @@
+ghcr_username = "ghcr_username"
+ghcr_token    = "ghcr_token"
+
+network_name = "pets-search-service-network"
+
+app_replicas           = 1
+backend_image_tag      = "backend_image_tag"
+telegram_bot_image_tag = "telegram_bot_image_tag"
+postgres_image_tag     = "postgres_image_tag"
+minio_image_tag        = "minio_image_tag"
+
+app_internal_port           = 8000
+app_external_port           = 8000
+postgres_external_port      = 5432
+minio_api_external_port     = 9000
+minio_console_external_port = 9001
+
+django_secret_key    = "django_secret_key"
+django_debug         = "False"
+django_allowed_hosts = "*"
+
+postgres_db       = "postgres_db"
+postgres_user     = "postgres_user"
+postgres_password = "postgres_password"
+
+minio_root_user     = "minio_root_user"
+minio_root_password = "minio_root_password"
+minio_bucket_name   = "minio_bucket_name"
+
+telegram_bot_token = "telegram_bot_token"
