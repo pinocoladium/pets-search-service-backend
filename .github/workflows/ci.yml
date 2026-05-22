@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI Pipeline Optimized
 
 on:
   pull_request:
@@ -12,11 +12,13 @@ on:
 permissions:
   contents: read
   packages: write
+  security-events: write
 
 env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE_NAME: pets-search-service-backend
   TELEGRAM_BOT_IMAGE_NAME: pets-search-service-telegram-bot
+  PYTHON_VERSION: "3.12"
 
 jobs:
   lint:
@@ -30,7 +32,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pre-commit environments
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-
 
       - name: Install pre-commit
         run: |
@@ -43,7 +53,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    needs: lint
 
     steps:
       - name: Checkout repository
@@ -52,22 +61,31 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/uv
+          key: ${{ runner.os }}-python-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-python-
 
       - name: Install dependencies
         run: |
           pip install uv
           uv pip install --system -r requirements.txt
-          pip install pytest pytest-django
+          pip install pytest pytest-django pytest-xdist
 
-      - name: Run unit tests
+      - name: Run unit tests in parallel
         run: |
-          pytest
+          pytest -n auto
 
-  security-scan:
-    name: Security Scan
+  security-sast:
+    name: Security SAST
     runs-on: ubuntu-latest
-    needs: test
 
     steps:
       - name: Checkout repository
@@ -76,22 +94,110 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/uv
+          key: ${{ runner.os }}-security-sast-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-security-sast-
 
       - name: Install Bandit
         run: |
           pip install bandit
 
-      - name: Run security scan
+      - name: Run Bandit
         run: |
-          bandit -r . -x ./tests,./venv,./.venv
+          bandit -r . -x ./tests,./venv,./.venv -f json -o bandit-report.json
+
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json
+
+  security-sca:
+    name: Security SCA
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/uv
+          key: ${{ runner.os }}-security-sca-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-security-sca-
+
+      - name: Install pip-audit
+        run: |
+          pip install pip-audit
+
+      - name: Run pip-audit
+        run: |
+          pip-audit --requirement requirements.txt --format json --output pip-audit-report.json || true
+
+      - name: Upload pip-audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-report
+          path: pip-audit-report.json
+
+  security-gate:
+    name: Security Gate
+    runs-on: ubuntu-latest
+    needs:
+      - security-sast
+      - security-sca
+
+    steps:
+      - name: Check security status
+        run: |
+          echo "Checking security status..."
+          if [ "${{ needs.security-sast.result }}" = "failure" ] || [ "${{ needs.security-sca.result }}" = "failure" ]; then
+            echo "Critical security issues found"
+            exit 1
+          fi
+          echo "Security checks passed"
 
   build-and-push:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
-    needs: [test, security-scan]
+    needs:
+      - lint
+      - test
+      - security-gate
 
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: backend
+            image_name: pets-search-service-backend
+            dockerfile: ./Dockerfile
+            cache_tag: backend-buildcache
+          - service: telegram-bot
+            image_name: pets-search-service-telegram-bot
+            dockerfile: ./telegram/Dockerfile
+            cache_tag: telegram-bot-buildcache
 
     steps:
       - name: Checkout repository
@@ -102,6 +208,9 @@ jobs:
         run: |
           echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -109,38 +218,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract backend Docker metadata
-        id: backend_meta
+      - name: Extract Docker metadata
+        id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ env.BACKEND_IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ matrix.image_name }}
           tags: |
             type=raw,value=latest
             type=sha,prefix=sha-
 
-      - name: Build and push backend Docker image
+      - name: Build and push ${{ matrix.service }} Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
+          file: ${{ matrix.dockerfile }}
           push: true
-          tags: ${{ steps.backend_meta.outputs.tags }}
-          labels: ${{ steps.backend_meta.outputs.labels }}
-
-      - name: Extract Telegram bot Docker metadata
-        id: telegram_bot_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ env.TELEGRAM_BOT_IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest
-            type=sha,prefix=sha-
-
-      - name: Build and push Telegram bot Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./telegram/Dockerfile
-          push: true
-          tags: ${{ steps.telegram_bot_meta.outputs.tags }}
-          labels: ${{ steps.telegram_bot_meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ matrix.image_name }}:${{ matrix.cache_tag }}
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ matrix.image_name }}:${{ matrix.cache_tag }},mode=max
