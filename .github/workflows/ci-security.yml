@@ -1,0 +1,267 @@
+name: Security Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE_NAME: pets-search-service-backend
+  TELEGRAM_BOT_IMAGE_NAME: pets-search-service-telegram-bot
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  secret-detection:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare artifacts directory
+        run: mkdir -p artifacts
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config-path: gitleaks.toml
+          report-path: artifacts/gitleaks-report.json
+          verbose: true
+
+      - name: Upload Gitleaks report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gitleaks-report
+          path: artifacts/gitleaks-report.json
+
+  sca-scan:
+    name: SCA Scan with Trivy FS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare artifacts directory
+        run: mkdir -p artifacts
+
+      - name: Run Trivy filesystem scan table
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          output: artifacts/trivy-fs-report.txt
+
+      - name: Save Trivy filesystem JSON report
+        uses: aquasecurity/trivy-action@master
+        if: always()
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: json
+          severity: CRITICAL,HIGH,MEDIUM,LOW
+          output: artifacts/trivy-fs-report.json
+
+      - name: Upload Trivy FS reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-fs-report
+          path: |
+            artifacts/trivy-fs-report.txt
+            artifacts/trivy-fs-report.json
+
+  sbom-generation:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare artifacts directory
+        run: mkdir -p artifacts
+
+      - name: Generate SBOM with Syft
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: artifacts/sbom.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: artifacts/sbom.json
+
+  build-images:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs:
+      - secret-detection
+      - sca-scan
+      - sbom-generation
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: backend
+            image_name: pets-search-service-backend
+            dockerfile: ./Dockerfile
+          - service: telegram-bot
+            image_name: pets-search-service-telegram-bot
+            dockerfile: ./telegram/Dockerfile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Convert repository owner to lowercase
+        id: repo_owner
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build local image for security scan
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: false
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ matrix.image_name }}:${{ github.sha }}
+
+      - name: Save image name
+        run: |
+          mkdir -p artifacts
+          echo "${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ matrix.image_name }}:${{ github.sha }}" > artifacts/${{ matrix.service }}-image.txt
+
+      - name: Upload image metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.service }}-image-metadata
+          path: artifacts/${{ matrix.service }}-image.txt
+
+  image-scan:
+    name: Trivy Image Scan
+    runs-on: ubuntu-latest
+    needs:
+      - build-images
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: backend
+            image_name: pets-search-service-backend
+            dockerfile: ./Dockerfile
+          - service: telegram-bot
+            image_name: pets-search-service-telegram-bot
+            dockerfile: ./telegram/Dockerfile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Convert repository owner to lowercase
+        id: repo_owner
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Prepare artifacts directory
+        run: mkdir -p artifacts
+
+      - name: Build image for Trivy scan
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: false
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ matrix.image_name }}:${{ github.sha }}
+
+      - name: Run Trivy image scan table
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ matrix.image_name }}:${{ github.sha }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: 1
+          output: artifacts/trivy-image-report-${{ matrix.service }}.txt
+
+      - name: Save Trivy image JSON report
+        uses: aquasecurity/trivy-action@master
+        if: always()
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ matrix.image_name }}:${{ github.sha }}
+          format: json
+          severity: CRITICAL,HIGH,MEDIUM,LOW
+          output: artifacts/trivy-image-report-${{ matrix.service }}.json
+
+      - name: Upload Trivy image reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-image-report-${{ matrix.service }}
+          path: |
+            artifacts/trivy-image-report-${{ matrix.service }}.txt
+            artifacts/trivy-image-report-${{ matrix.service }}.json
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs:
+      - secret-detection
+      - sca-scan
+      - sbom-generation
+      - image-scan
+    if: always()
+
+    steps:
+      - name: Print security summary
+        run: |
+          echo "Secret Detection: ${{ needs.secret-detection.result }}"
+          echo "SCA Scan: ${{ needs.sca-scan.result }}"
+          echo "SBOM Generation: ${{ needs.sbom-generation.result }}"
+          echo "Image Scan: ${{ needs.image-scan.result }}"
+
+          if [ "${{ needs.secret-detection.result }}" = "failure" ]; then
+            echo "Secret detection failed"
+            exit 1
+          fi
+
+          if [ "${{ needs.sca-scan.result }}" = "failure" ]; then
+            echo "SCA scan found Critical/High vulnerabilities"
+            exit 1
+          fi
+
+          if [ "${{ needs.image-scan.result }}" = "failure" ]; then
+            echo "Image scan found Critical/High vulnerabilities"
+            exit 1
+          fi
+
+          echo "Security pipeline completed"

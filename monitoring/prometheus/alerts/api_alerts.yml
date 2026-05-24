@@ -54,3 +54,20 @@ groups:
           summary: "Большое количество жалоб"
           description: "Количество жалоб в системе превысило 20"
           runbook_url: "https://github.com/pinocoladium/pets-search-service-backend"
+
+      - alert: SuspiciousErrorSpike
+        expr: |
+          (
+            sum(rate(django_http_responses_total_by_status_total{status=~"5.."}[5m]))
+            /
+            sum(rate(django_http_responses_total_by_status_total[5m]))
+          ) * 100 > 10
+        for: 2m
+        labels:
+          severity: critical
+          type: security
+          team: backend
+        annotations:
+          summary: "Подозрительный рост ошибок"
+          description: "Доля 5xx ошибок превысила 10%. Возможна атака, сканирование уязвимостей или некорректные запросы к API."
+          runbook_url: "https://github.com/pinocoladium/pets-search-service-backend"

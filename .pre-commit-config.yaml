@@ -46,3 +46,13 @@ repos:
         args: [
           --ignore=W503 T202 E704
         ]
+
+-  repo: https://github.com/gitleaks/gitleaks
+   rev: v8.18.0
+   hooks:
+   -  id: gitleaks
+      args:
+        - detect
+        - --source=.
+        - --config=gitleaks.toml
+        - --verbose

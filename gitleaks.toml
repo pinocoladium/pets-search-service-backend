@@ -1,0 +1,31 @@
+title = "Pets Search Service Gitleaks Rules"
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey)["'\s:=]+[A-Za-z0-9_\-]{20,}'''
+tags = ["api-key", "secret"]
+
+[[rules]]
+id = "django-secret-key"
+description = "Django Secret Key"
+regex = '''(?i)(secret[_-]?key|django[_-]?secret)["'\s:=]+["']?[A-Za-z0-9!@#$%^&*()_\-+=]{20,}["']?'''
+tags = ["django", "secret"]
+
+[[rules]]
+id = "database-url"
+description = "Database connection string with credentials"
+regex = '''(?i)(postgres|postgresql)://[^:\s]+:[^@\s]+@[^/\s]+/[^\s]+'''
+tags = ["database", "secret"]
+
+[[rules]]
+id = "private-key"
+description = "Private Key"
+regex = '''-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'''
+tags = ["private-key", "secret"]
+
+[[rules]]
+id = "telegram-token"
+description = "Telegram Bot Token"
+regex = '''[0-9]{8,10}:[A-Za-z0-9_-]{35}'''
+tags = ["telegram", "secret"]
