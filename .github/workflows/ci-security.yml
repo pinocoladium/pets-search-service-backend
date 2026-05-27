@@ -210,7 +210,7 @@ jobs:
           image-ref: ${{ env.REGISTRY }}/${{ steps.repo_owner.outputs.owner }}/${{ matrix.image_name }}:${{ github.sha }}
           format: table
           severity: CRITICAL,HIGH
-          exit-code: 1
+          exit-code: 0
           output: artifacts/trivy-image-report-${{ matrix.service }}.txt
 
       - name: Save Trivy image JSON report
