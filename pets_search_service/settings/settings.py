@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'apps.pet_notice_matches.apps.PetNoticeMatchesConfig',
     'apps.complaints.apps.ComplaintsConfig',
     'apps.communications.apps.CommunicationsConfig',
+    'apps.ai.apps.AiConfig',
 ]
 
 MIDDLEWARE = [
@@ -151,3 +152,7 @@ MEDIA_URL = '/ev_api/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+OLLAMA_BASE_URL = env.str('OLLAMA_BASE_URL')
+OLLAMA_MODEL = env.str('OLLAMA_MODEL')

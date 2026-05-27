@@ -11,6 +11,10 @@ services:
       - .:/code
     networks:
       - pets-search-service-network
+    depends_on:
+      - postgres-main
+      - minio
+      - ollama
 
   postgres-main:
     image: postgis/postgis:16-3.4-alpine
@@ -33,6 +37,16 @@ services:
     env_file: .environment
     volumes:
       - ./storage/minio:/data
+    networks:
+      - pets-search-service-network
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pets-search-service-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./storage/ollama:/root/.ollama
     networks:
       - pets-search-service-network
 
