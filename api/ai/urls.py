@@ -1,9 +1,18 @@
 from django.urls import path
 
-from api.ai.views import OllamaGenerateResponseAPIView, OllamaImageDescriptionAPIView
+from api.ai.views import (
+    OllamaCheckAnnouncementAPIView,
+    OllamaGenerateAnnouncementTitleAPIView,
+    OllamaGenerateResponseAPIView,
+    OllamaImproveAnnouncementAPIView,
+    OllamaPetDescriptionAPIView,
+)
 
 
 urlpatterns = [
-    path('ollama/', OllamaGenerateResponseAPIView.as_view(), name='ollama-generate-response'),
-    path('ollama/image-description/', OllamaImageDescriptionAPIView.as_view(), name='ollama-image-description'),
+    path('ask/', OllamaGenerateResponseAPIView.as_view(), name='ollama-ask'),
+    path('pet-description/', OllamaPetDescriptionAPIView.as_view(), name='ollama-pet-description'),
+    path('improve-announcement/', OllamaImproveAnnouncementAPIView.as_view(), name='ollama-improve-announcement'),
+    path('generate-title/', OllamaGenerateAnnouncementTitleAPIView.as_view(), name='ollama-generate-title'),
+    path('check-announcement/', OllamaCheckAnnouncementAPIView.as_view(), name='ollama-check-announcement'),
 ]

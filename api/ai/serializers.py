@@ -8,7 +8,14 @@ class OllamaGenerateResponseSerializer(serializers.Serializer):
     )
 
 
-class OllamaImageDescriptionSerializer(serializers.Serializer):
+class OllamaPetDescriptionSerializer(serializers.Serializer):
     image = serializers.ImageField(
         label='Фотография',
+    )
+
+
+class OllamaAnnouncementSerializer(serializers.Serializer):
+    text = serializers.CharField(
+        label='Текст объявления',
+        max_length=150,
     )
